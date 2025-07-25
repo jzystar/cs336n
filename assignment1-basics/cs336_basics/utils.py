@@ -1,5 +1,50 @@
+import pickle
 import os
+from pathlib import Path
 from typing import BinaryIO
+
+
+def get_file_path(file_name):
+    """
+    generate file path for the dataset
+
+    Args:
+        file_name (str): name of the dataset
+
+    Returns:
+        str: file path of the dataset
+    """
+    data_dir = Path(__file__).parent.parent / 'data'
+    file_path = os.path.join(data_dir, file_name)
+    print("Dataset file path: ",file_path)
+    return file_path
+
+
+def save_file(data, path):
+    """
+    save the data to a file
+
+    Args:
+        data (Any): data to save
+        path (str): path to save the data
+    """
+    with open(path, 'wb') as f:
+        pickle.dump(data, f)
+
+def load_file(path):
+    """
+    load the data from a file
+
+    Args:
+        path (str): path to load the data
+
+    Returns:
+        Any: data loaded from the file
+    """
+    with open(path, 'rb') as f:
+        data = pickle.load(f)
+    return data
+
 
 def find_chunk_boundaries(
     file: BinaryIO, 
@@ -48,57 +93,3 @@ def find_chunk_boundaries(
 
     # Make sure all boundaries are unique, but might be fewer than desired_num_chunks
     return sorted(set(chunk_boundaries))
-
-## Usage
-from pathlib import Path
-num_processes = 1
-data_dir = Path(__file__).parent.parent / 'data'
-
-file_name = '10000.txt'
-file_path = os.path.join(data_dir, file_name)
-print(file_path)
-
-PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
-import regex as re
-from collections import defaultdict
-
-
-pretoken_cnt = defaultdict(int)
-
-
-with open(file_path, "rb") as f:
-    boundaries = find_chunk_boundaries(
-        f, num_processes, "<|endoftext|>".encode("utf-8"))
-    
-    # The following is a serial implementation, but you can parallelize this 
-    # by sending each start/end pair to a set of processes.
-    i = 0
-    for start, end in zip(boundaries[:-1], boundaries[1:]):
-        f.seek(start)
-        chunk = f.read(end - start).decode("utf-8", errors="ignore")
-        # Run pre-tokenization on your chunk and store the counts for each pre-token
-        for i, match in enumerate(re.finditer(PAT, chunk)):
-            cur_str = match.group().strip()
-            if cur_str == '' :
-                continue
-            else:
-                pretoken_cnt[cur_str] += 1
-            
-    pretoken_cnt['<|endoftext|>'] = pretoken_cnt['endoftext']
-    pretoken_cnt.pop('endoftext')
-    pretoken_cnt.pop('<|')
-    pretoken_cnt.pop('|>')
-
-
-vocabulary = []
-special_tokens = ['<|endoftext|>']
-for i in range(256):
-    vocabulary.append(bytes([i]))
-
-for t in special_tokens:    
-    vocabulary.append(t.encode('utf-8'))
-
-print(vocabulary)
-    # sorted_tokens = sorted([(v, k) for k, v in pretoken_cnt.items()], reverse=True)
-    # print(sorted_tokens[:10])
-print('Done')
