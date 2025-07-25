@@ -16,7 +16,7 @@ NUM_WORKERS = 4
 DATASET_NAME = 'TinyStoriesV2-GPT4-train.txt'
 # DATASET_NAME = 'small.txt'
 # TEST_DATASET_NAME = 'tinystories_sample_5M.txt'
-TEST_DATASET_NAME = 'text.txt'
+TEST_DATASET_NAME = 'test1.txt'
 TinyStoriesV2_GPT4_VOCAB_NAME = 'TinyStoriesV2-GPT4-vocab.pkl'
 TinyStoriesV2_GPT4_MERGES_NAME= 'TinyStoriesV2-GPT4-merges.pkl'
 TEST_VOCAB_NAME = 'text-vocab.pkl'
@@ -45,8 +45,7 @@ def pretokenize(file_path, special_tokens, num_processes):
     print("special_tokens_for_split are: ", special_tokens_for_split)
 
     with open(file_path, "rb") as f:
-        boundaries = find_chunk_boundaries(
-            f, num_processes, "<|endoftext|>".encode("utf-8"))
+        boundaries = find_chunk_boundaries(f, num_processes, "<|endoftext|>".encode("utf-8"))
         print(f"boundaries size {len(boundaries)}, boundaries are: {boundaries}")
         # The following is a serial implementation, but you can parallelize this 
         # by sending each start/end pair to a set of processes.
@@ -64,7 +63,8 @@ def pretokenize(file_path, special_tokens, num_processes):
                 # if sub_chunk in special_tokens:
                 #     continue
                 for match in re.finditer(PAT, sub_chunk):
-                    key = tuple(map(lambda x: x.encode('utf-8'), match.group()))
+                    key = tuple(map(lambda x: bytes([x]), match.group().encode('utf-8')))
+                    # key = tuple(map(lambda x: x.encode('utf-8'), match.group()))
                     # if b'\xe2' in key or b'\x80' in key:
                     #     print(key)
                     #     print("match is: ",  match.group())

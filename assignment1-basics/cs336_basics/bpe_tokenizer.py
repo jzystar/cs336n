@@ -76,7 +76,7 @@ class BPETokenizer:
                 pretokens.append(sub_chunk)
             else:
                 for match in re.finditer(PAT, sub_chunk):
-                    key = tuple(map(lambda x: x.encode('utf-8'), match.group()))
+                    key = tuple(map(lambda x: bytes([x]), match.group().encode('utf-8')))
                     pretokens.append(key)
         print("pretoken size: ", len(pretokens))
         # print("pretokens: ", pretokens)
@@ -134,10 +134,10 @@ class BPETokenizer:
                 yield token
     
     def decode(self, ids: list[int]) -> str:
-        text = ""
+        text = b""
         for id in ids:
-            text += self.vocab[id].decode('utf-8')
-        return text
+            text += self.vocab[id]
+        return text.decode('utf-8', errors='replace')
 
     def _eoncode_of_pretokens(self, pretokens):
         """
