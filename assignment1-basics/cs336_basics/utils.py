@@ -1,5 +1,50 @@
+import pickle
 import os
+from pathlib import Path
 from typing import BinaryIO
+
+
+def get_file_path(file_name):
+    """
+    generate file path for the dataset
+
+    Args:
+        file_name (str): name of the dataset
+
+    Returns:
+        str: file path of the dataset
+    """
+    data_dir = Path(__file__).parent.parent / 'data'
+    file_path = os.path.join(data_dir, file_name)
+    print("Dataset file path: ",file_path)
+    return file_path
+
+
+def save_file(data, path):
+    """
+    save the data to a file
+
+    Args:
+        data (Any): data to save
+        path (str): path to save the data
+    """
+    with open(path, 'wb') as f:
+        pickle.dump(data, f)
+
+def load_file(path):
+    """
+    load the data from a file
+
+    Args:
+        path (str): path to load the data
+
+    Returns:
+        Any: data loaded from the file
+    """
+    with open(path, 'rb') as f:
+        data = pickle.load(f)
+    return data
+
 
 def find_chunk_boundaries(
     file: BinaryIO, 
@@ -48,15 +93,3 @@ def find_chunk_boundaries(
 
     # Make sure all boundaries are unique, but might be fewer than desired_num_chunks
     return sorted(set(chunk_boundaries))
-
-## Usage
-with open(..., "rb") as f:
-    boundaries = find_chunk_boundaries(
-        f, num_processes, "<|endoftext|>".encode("utf-8"))
-        
-    # The following is a serial implementation, but you can parallelize this 
-    # by sending each start/end pair to a set of processes.
-    for start, end in zip(boundaries[:-1], boundaries[1:]):
-        f.seek(start)
-        chunk = f.read(end - start).decode("utf-8", errors="ignore")
-        # Run pre-tokenization on your chunk and store the counts for each pre-token
